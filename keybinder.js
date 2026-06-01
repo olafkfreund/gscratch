@@ -6,13 +6,12 @@ export default class Keybinder {
   constructor() {
     this.bindings = new Map();
 
-    global.display.connect(
+    // Keep the handler id so we can disconnect it in clearBindings(); global.display
+    // outlives the extension, so a leaked connection accumulates on every enable/disable.
+    this.acceleratorHandlerId = global.display.connect(
       'accelerator-activated',
       (display, action, deviceId, timestamp) => {
-        log(
-          '[gnome-scratchpad] accelerator activated: [display={}, action={}, deviceId={}, timestamp={}]',
-          display, action, deviceId, timestamp
-        );
+        log(`[gnome-scratchpad] accelerator activated: [action=${action}]`);
         this._onAccelerator(action);
       }
     )
@@ -46,6 +45,12 @@ export default class Keybinder {
     for (let binding of this.bindings) {
       global.display.ungrab_accelerator(binding[1].action);
       Main.wm.allowKeybinding(binding[1].name, Shell.ActionMode.NONE);
+    }
+    this.bindings.clear();
+
+    if (this.acceleratorHandlerId) {
+      global.display.disconnect(this.acceleratorHandlerId);
+      this.acceleratorHandlerId = null;
     }
   }
 

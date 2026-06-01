@@ -12,20 +12,66 @@ dismiss it to get back to what you were doing before.
 
 This extension brings that functionality to Gnome.
 
+## Features
+
+- **Toggle apps with a shortcut** — show a window centered and focused, or hide it,
+  with a global keybind. Match windows by class (`wmclass`) or title using regular expressions.
+- **Hide-all shortcut** — dismiss every visible scratchpad window at once.
+- **Graphical preferences** — configure everything from a GTK4/Adwaita dialog
+  (*Extensions → Scratchpad → Settings*); no JSON editing required.
+- **Pick from open windows** — when adding a binding, choose the target from a live
+  dropdown of the windows you currently have open, with a **Custom…** option for regexes or
+  apps that aren't running. The list is sourced from the shell over D-Bus.
+- **Live reload** — changes apply immediately; no need to disable/re-enable the extension.
+- **GSettings-backed** — settings live under `org.gnome.shell.extensions.scratchpad`, so they
+  participate in your normal dconf backup/sync. An existing
+  `~/.config/gnome-scratchpad/config.json` is imported automatically on first run.
+- **GNOME 45–49** support.
+
 ## Installation
 
 Clone or copy the contents of this repo to:
 
 ```$HOME/.local/share/gnome-shell/extensions/scratchpad@wastedintelligence.com```
 
+The extension stores its configuration in GSettings, so you must compile the
+schema once after installing (and again any time you pull schema changes):
+
+```bash
+./bin/build   # runs: glib-compile-schemas schemas/
+```
+
 ## Configuration
 
-Before enabling the extension, you'll need to create an initial configuration
-located at:
+You can configure Scratchpad two ways: the graphical preferences dialog
+(recommended) or, for the scriptable/advanced case, GSettings directly.
 
-```$HOME/.config/gnome-scratchpad/config.json```
+### Graphical configuration (recommended)
 
-Here's an initial example to get started:
+Open the preferences dialog from the **Extensions** app (the gear icon next to
+"Scratchpad"), or from a terminal:
+
+```bash
+gnome-extensions prefs scratchpad@wastedintelligence.com
+```
+
+From there you can set the window size and the hide-all shortcut, and add/remove
+bindings. When adding a binding, the **Window class** field is a dropdown
+populated with the windows you currently have open — so you usually don't need
+to hunt for a `wmclass` by hand. Pick **Custom…** to type a regex or target an
+app that isn't currently running. Changes apply **live**; there's no need to
+disable/re-enable the extension.
+
+> [!NOTE]
+> If you previously used a `~/.config/gnome-scratchpad/config.json` file, it is
+> imported into GSettings automatically the first time the extension runs after
+> upgrading. The file is no longer read after that.
+
+### Advanced: editing GSettings directly
+
+The same settings are available under the
+`org.gnome.shell.extensions.scratchpad` schema. The `bindings` key holds a
+JSON-encoded array equivalent to the legacy config:
 
 ```json
 {
@@ -92,14 +138,14 @@ The extension logs success/failure states when setting up keybinds, as well as
 lookup failures when a keybind is handled but a matching window can't be found.
 
 > [!TIP]
-> The configuration file is only loaded once, when the extension is initially
-> enabled. If you are making changes to it, you can toggle the extension in the
-> Gnome extensions app to forcibly reload the configuration.
+> Configuration is reloaded live whenever it changes, so edits from the
+> preferences dialog (or via `gsettings`) take effect immediately — no need to
+> toggle the extension.
 
-If none of your keybinds are working, check the extensions app. It's possible
-your configuration file isn't valid JSON, which will prevent the extension from
-starting. If that's the case, you'll see an error displayed underneath the
-extension name.
+If none of your keybinds are working, check the extensions app and the Logs as
+described above. A malformed `bindings` value is tolerated (treated as empty and
+logged) rather than crashing the extension, so a missing keybind usually means
+the shortcut is reserved or the `wmclass`/`title` doesn't match any window.
 
 ## Website "applications"
 

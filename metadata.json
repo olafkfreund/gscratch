@@ -3,6 +3,7 @@
   "description": "Show and hide floating apps using keyboard shortcuts",
   "uuid": "scratchpad@wastedintelligence.com",
   "url": "https://github.com/jmacdonald/gnome-scratchpad",
+  "settings-schema": "org.gnome.shell.extensions.scratchpad",
   "shell-version": [
     "45",
     "46",

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.scratchpad"
+          path="/org/gnome/shell/extensions/scratchpad/">
+    <key name="window-width" type="i">
+      <default>1800</default>
+      <summary>Scratchpad window width</summary>
+      <description>Width (px) a scratchpad window is resized to when shown.</description>
+    </key>
+    <key name="window-height" type="i">
+      <default>1200</default>
+      <summary>Scratchpad window height</summary>
+      <description>Height (px) a scratchpad window is resized to when shown.</description>
+    </key>
+    <key name="hide-keybind" type="s">
+      <default>'&lt;super&gt;n'</default>
+      <summary>Hide-all shortcut</summary>
+      <description>Keyboard shortcut that hides all visible scratchpad windows.</description>
+    </key>
+    <key name="bindings" type="s">
+      <default>'[]'</default>
+      <summary>Scratchpad bindings (JSON)</summary>
+      <description>
+        JSON-encoded array of binding objects, each {wmclass?, title?, keybind}.
+        Stored as a string because each entry is a small heterogeneous object.
+      </description>
+    </key>
+  </schema>
+</schemalist>

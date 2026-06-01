@@ -1,0 +1,9 @@
+#!/bin/sh
+# Compile the GSettings schema. Run after cloning/installing or editing the
+# schema in schemas/. Required before the extension can load (it declares a
+# settings-schema in metadata.json).
+
+set -e
+cd "$(dirname "$0")/.."
+glib-compile-schemas schemas/
+echo "Compiled schemas/ -> schemas/gschemas.compiled"

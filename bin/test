@@ -1,0 +1,18 @@
+#!/bin/sh
+# Run the headless test suite (requires gjs and glib-compile-schemas on PATH).
+# These cover config.js (defaults, legacy-config migration, bad-JSON handling)
+# and the D-Bus interface XML. The GUI/shell-integration paths (prefs dialog,
+# live D-Bus window list, keybinding) still need manual checks via ./bin/run.
+
+set -e
+cd "$(dirname "$0")/.."
+
+glib-compile-schemas schemas/
+export GSETTINGS_SCHEMA_DIR="$PWD/schemas"
+export GSETTINGS_BACKEND=memory
+
+TMPHOME="$(mktemp -d)"
+trap 'rm -rf "$TMPHOME"' EXIT
+
+HOME="$TMPHOME" gjs -m test/config-test.js
+gjs -m test/dbus-xml-test.js

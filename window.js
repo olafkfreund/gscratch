@@ -7,11 +7,15 @@ export default class Window {
     let windows = [];
 
     // Find the Gnome window instance
-    Window.appSystem.get_running().map(app => windows.push(...app.get_windows()));
+    Window.appSystem.get_running().forEach(app => windows.push(...app.get_windows()));
     const win = windows.find(win => {
+      // get_wm_class_instance()/get_title() can return null for some windows,
+      // so guard before calling .match() to avoid throwing mid-search.
+      const winClass = win.get_wm_class_instance();
+      const winTitle = win.get_title();
       return (
-        (wmclass ? win.get_wm_class_instance().match(new RegExp(wmclass)) : false) ||
-        (title ? win.get_title().match(new RegExp(title)) : false)
+        (wmclass && winClass && winClass.match(new RegExp(wmclass))) ||
+        (title && winTitle && winTitle.match(new RegExp(title)))
       )
     });
 
@@ -29,13 +33,26 @@ export default class Window {
   }
 
   static logWindows() {
+    for (const { wmclass, title } of Window.listClasses()) {
+      log(`[gnome-scratchpad] =========================`);
+      log(`[gnome-scratchpad] title: "${title}"`);
+      log(`[gnome-scratchpad] wmclass: "${wmclass}"`);
+    }
+  }
+
+  // Enumerate currently-running windows as { wmclass, title } entries, skipping
+  // windows with no class. Shared by logWindows() and the D-Bus window-list
+  // service that feeds the preferences dropdown.
+  static listClasses() {
+    const entries = [];
     for (const app of Window.appSystem.get_running()) {
       for (const win of app.get_windows()) {
-        log(`[gnome-scratchpad] =========================`);
-        log(`[gnome-scratchpad] title: "${win.get_title()}"`);
-        log(`[gnome-scratchpad] wmclass: "${win.get_wm_class_instance()}"`);
+        const wmclass = win.get_wm_class_instance();
+        if (!wmclass) { continue; }
+        entries.push({ wmclass, title: win.get_title() ?? '' });
       }
     }
+    return entries;
   }
 
   constructor(gnome_window) {
