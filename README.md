@@ -6,164 +6,127 @@ showing/hiding an application as a floating, centered window with a global
 shortcut.
 
 This interaction model is ideal for applications you engage with _often but
-briefly_. Scratchpads allow you to summon group messaging, email clients,
-calendars, or a terminal window instantly from any workspace, and then quickly
-dismiss it to get back to what you were doing before.
-
-This extension brings that functionality to Gnome.
+briefly_. Scratchpads let you summon group messaging, an email client, a
+calendar, or a terminal instantly from any workspace, then quickly dismiss it to
+get back to what you were doing. This extension brings that to GNOME.
 
 ## Features
 
-- **Toggle apps with a shortcut** — show a window centered and focused, or hide it,
-  with a global keybind. Match windows by class (`wmclass`) or title using regular expressions.
+- **Toggle apps with a shortcut** — press a global keybind to show a window
+  centered and focused, or hide it if it's already in front.
 - **Hide-all shortcut** — dismiss every visible scratchpad window at once.
-- **Graphical preferences** — configure everything from a GTK4/Adwaita dialog
-  (*Extensions → Scratchpad → Settings*); no JSON editing required.
-- **Pick from open windows** — when adding a binding, choose the target from a live
-  dropdown of the windows you currently have open, with a **Custom…** option for regexes or
-  apps that aren't running. The list is sourced from the shell over D-Bus.
-- **Live reload** — changes apply immediately; no need to disable/re-enable the extension.
-- **GSettings-backed** — settings live under `org.gnome.shell.extensions.scratchpad`, so they
-  participate in your normal dconf backup/sync. An existing
-  `~/.config/gnome-scratchpad/config.json` is imported automatically on first run.
+- **Graphical preferences** — set everything up from a GTK/Adwaita dialog. No
+  config files to hand-edit.
+- **Pick from open windows** — when adding a binding, choose the target from a
+  live dropdown of the windows you currently have open, with a **Custom…**
+  option for regexes or apps that aren't running.
+- **Match by class or title** — target windows by their `wmclass` or window
+  title, using regular expressions.
+- **Live reload** — changes apply immediately; no need to toggle the extension.
 - **GNOME 45–49** support.
+
+## How it works
+
+Each binding pairs a **window matcher** with a **keyboard shortcut**:
+
+- When you press the shortcut and the matched window is *not* focused, it is
+  moved to your current workspace, centered, resized, and focused.
+- Press it again while that window is focused and it is hidden (minimized).
+- A separate **hide-all** shortcut minimizes every matched window at once.
+
+Windows are matched by `wmclass` (the application's window class) or `title`,
+each interpreted as a regular expression. If both are given they form a logical
+OR, with `wmclass` taking precedence. If several windows match, the first one is
+used.
+
+Configuration is stored in GNOME's settings system (GSettings, under the
+`org.gnome.shell.extensions.scratchpad` schema), so it is backed up and synced
+along with the rest of your GNOME settings.
 
 ## Installation
 
-Clone or copy the contents of this repo to:
+Clone or copy this repo to:
 
-```$HOME/.local/share/gnome-shell/extensions/scratchpad@wastedintelligence.com```
+```
+$HOME/.local/share/gnome-shell/extensions/scratchpad@wastedintelligence.com
+```
 
-The extension stores its configuration in GSettings, so you must compile the
-schema once after installing (and again any time you pull schema changes):
+Then compile the settings schema once (and again whenever you pull schema
+changes):
 
 ```bash
 ./bin/build   # runs: glib-compile-schemas schemas/
 ```
 
-## Configuration
+Finally, enable the extension — on Wayland you may need to log out and back in
+first so GNOME Shell picks up the newly added extension:
 
-You can configure Scratchpad two ways: the graphical preferences dialog
-(recommended) or, for the scriptable/advanced case, GSettings directly.
+```bash
+gnome-extensions enable scratchpad@wastedintelligence.com
+```
 
-### Graphical configuration (recommended)
+(or toggle it on in the **Extensions** app.)
 
-Open the preferences dialog from the **Extensions** app (the gear icon next to
-"Scratchpad"), or from a terminal:
+## Getting started
+
+Open the preferences dialog from the **Extensions** app (the gear/settings icon
+next to "Scratchpad"), or from a terminal:
 
 ```bash
 gnome-extensions prefs scratchpad@wastedintelligence.com
 ```
 
-From there you can set the window size and the hide-all shortcut, and add/remove
-bindings. When adding a binding, the **Window class** field is a dropdown
-populated with the windows you currently have open — so you usually don't need
-to hunt for a `wmclass` by hand. Pick **Custom…** to type a regex or target an
-app that isn't currently running. Changes apply **live**; there's no need to
-disable/re-enable the extension.
+**General** lets you set the size scratchpad windows are resized to, and the
+hide-all shortcut.
 
-> [!NOTE]
-> If you previously used a `~/.config/gnome-scratchpad/config.json` file, it is
-> imported into GSettings automatically the first time the extension runs after
-> upgrading. The file is no longer read after that.
+**Bindings** is where you add scratchpads. Click **+** to add one, then for each
+binding:
 
-### Advanced: editing GSettings directly
+1. **Window class** — pick the target from the dropdown of currently-open
+   windows, or choose **Custom…** to type a `wmclass` regex (useful for apps
+   that aren't running yet, or to match a family of windows).
+2. **Title** *(optional)* — a regex matched against the window title instead of
+   (or in addition to) the class.
+3. **Shortcut** — the keybind that toggles this window, in
+   `[<Modifiers>+]<key>` notation, e.g. `<super>i` or `<super>Return`.
 
-The same settings are available under the
-`org.gnome.shell.extensions.scratchpad` schema. The `bindings` key holds a
-JSON-encoded array equivalent to the legacy config:
-
-```json
-{
-    "window_width": 1800,
-    "window_height": 1200,
-    "hide_keybind": "<super>n",
-    "bindings": [
-      { "wmclass": "^Slack$", "keybind": "<super>i" },
-      { "wmclass": "^kitty$", "keybind": "<super>Return" }
-    ]
-}
-```
-
-Some of the options are self-explanatory, but we'll cover all of them for good
-measure:
-
-* `window_(width|height)`: width/height to which the window will be resized when shown
-* `hide_keybind`: keybind used to hide all visible scratchpad windows
-* `bindings`: array of rule + shortcut configurations for your scratchpad apps
-    * `wmclass`: regex used to target a window based on its class
-    * `title`: regex used to target a window based on its title
-    * `keybind`: shortcut in `[<Modifiers>+]<keycode>` notation
-
-> [!NOTE]
-> You only need to specify `wmclass` _or_ `title`. Of the two, `wmclass` is
-> generally more useful, since windows often change their titles based on content.
-> If you specify both, they'll form a logical OR, with `wmclass` taking precedence.
->
-> If multiple windows match the criteria, the **first** window will be used.
-
-### Finding window classes
-
-The easiest way to find a `wmclass` value for the window you're trying to target
-is to use Gnome's "looking glass" feature, which allows inspecting aspects of
-Gnome shell; here's how to use it:
-
-1. Make sure the app/window you're trying to identify is running/open
-2. Open Gnome's "run command" prompt (`Alt+F2` by default)
-3. Type `lg` (for "looking glass") and hit enter
-4. A panel opens with buttons on the top right; click the "Windows" button
-5. Find the app you're trying to target and make note of its `wmclass` attribute value
-
-### Picking keybinds
-
-Gnome reserves certain keybinds by default; some of these can be cleared, but
-others can't. When choosing a keybind, make sure it's not already assigned to
-something in `Settings > Keyboard > Keyboard Shortcuts > View and Customize Shortcuts`.
-If it is, disable the shortcut or assign it to another keybind.
-
-### Debugging
-
-The two most common configuration issues you're likely to encounter are:
-
-* the `keybind` you're trying to use is unavailable/reserved by Gnome
-* the `wmclass` or `title` isn't matching any windows
-
-You can diagnose both of these pretty easily by:
-
-1. Opening Gnome's "Logs" application
-2. Clicking the "All" category on the left side to show all messages
-3. Using the search function to filter messages containing "gnome-scratchpad"
-
-The extension logs success/failure states when setting up keybinds, as well as
-lookup failures when a keybind is handled but a matching window can't be found.
+Changes take effect immediately — try the shortcut right away.
 
 > [!TIP]
-> Configuration is reloaded live whenever it changes, so edits from the
-> preferences dialog (or via `gsettings`) take effect immediately — no need to
-> toggle the extension.
+> Configuration reloads live, so edits in the preferences dialog apply at once.
 
-If none of your keybinds are working, check the extensions app and the Logs as
-described above. A malformed `bindings` value is tolerated (treated as empty and
-logged) rather than crashing the extension, so a missing keybind usually means
-the shortcut is reserved or the `wmclass`/`title` doesn't match any window.
+### Finding a window class
+
+The dropdown covers most cases, but if you need to identify a window manually
+(for a `Custom…` regex), use GNOME's "Looking Glass":
+
+1. Make sure the target app/window is open.
+2. Open the "run command" prompt (`Alt+F2` by default).
+3. Type `lg` and hit enter.
+4. Click the "Windows" button (top right) and find your app's `wmclass`.
+
+> [!NOTE]
+> Prefer `wmclass` over `title` where possible — titles often change based on
+> the window's content, while the class is stable.
+
+### Picking shortcuts
+
+GNOME reserves some shortcuts. If a keybind doesn't work, check it isn't already
+assigned under *Settings → Keyboard → Keyboard Shortcuts → View and Customize
+Shortcuts*, and disable or reassign the conflicting one.
 
 ## Website "applications"
 
-Having instant access to applications from any workspace is useful, but
-scratchpads really shine when paired with website "applications", or more
-specifically, _site-specific browser windows_. You can configure Chrome/Chromium
-to open a website in a dedicated window and then assign a keybind to that
-window. This makes it possible to quickly interact with sites like Todoist,
-DevDocs, Google Calendar, or anything else that is either unavailable as a
-native app or that you'd simply prefer to not install locally.
-
-### Creating a website app
+Scratchpads pair especially well with _site-specific browser windows_. You can
+configure Chrome/Chromium to open a website in its own window and bind a shortcut
+to it — great for sites like Todoist, DevDocs, or Google Calendar that you'd
+rather not install natively.
 
 > [!NOTE]
-> This functionality is currently limited to Chrome/Chromium. It was previously
-> available in Firefox, but [was removed in v86](https://bugzilla.mozilla.org/show_bug.cgi?id=1682593).
+> This currently works with Chrome/Chromium. It was previously possible in
+> Firefox but [was removed in v86](https://bugzilla.mozilla.org/show_bug.cgi?id=1682593).
 
-You can create a shell script to run a website as an app like so:
+Create a small launcher script:
 
 ```bash
 #!/bin/sh
@@ -173,16 +136,13 @@ APP_NAME="todoist"
 chromium --user-data-dir="$HOME/.config/$APP_NAME" --app=https://$APP_NAME.com
 ```
 
-Running that will allow you to target the window using the following `bindings` entry:
-
-```json
-{ "wmclass": "^chrome\\-todoist\\.com", "keybind": "<super>t" }
-```
+The resulting window can be targeted with a `Custom…` window class such as
+`^chrome\-todoist\.com`.
 
 ### Creating a desktop entry
 
-While that works, launching the script from a terminal isn't ideal. To solve that,
-add the following contents to a new `$HOME/.local/share/applications/todoist.desktop` file:
+So you can launch it without a terminal, add a
+`$HOME/.local/share/applications/todoist.desktop` file:
 
 ```desktop
 [Desktop Entry]
@@ -190,10 +150,55 @@ Type=Application
 Encoding=UTF-8
 Name=Todoist
 Comment=Todoist Chromium Web Application
-Exec=/path/to/todoist/script/above
+Exec=/path/to/the/script/above
 Icon=application.png
 Terminal=false
 ```
 
-Once Gnome indexes that, you'll be able to launch Todoist from the overview
-screen and access it instantly from any workspace by hitting `Super + t`.
+Once GNOME indexes it, you can launch Todoist from the overview and toggle it
+from any workspace with your chosen shortcut.
+
+## Migrating from the old config file
+
+Earlier versions read a `~/.config/gnome-scratchpad/config.json` file. If you
+have one, it is **imported into GSettings automatically the first time** the
+extension runs after upgrading, after which the file is no longer used. Manage
+everything from the preferences dialog going forward.
+
+## Advanced: editing settings directly
+
+Every setting is also reachable via `gsettings` / dconf under
+`org.gnome.shell.extensions.scratchpad`. Bindings are stored in the `bindings`
+key as a JSON-encoded array:
+
+```bash
+gsettings set org.gnome.shell.extensions.scratchpad bindings \
+  '[{"wmclass":"^Slack$","keybind":"<super>i"},
+    {"wmclass":"^kitty$","keybind":"<super>Return"}]'
+```
+
+Keys: `window-width`, `window-height`, `hide-keybind`, and `bindings` (each
+entry is `{ wmclass?, title?, keybind }`).
+
+## Troubleshooting
+
+The extension logs to the system journal with a `gnome-scratchpad` prefix. View
+it in the **Logs** app (select "All" and search `gnome-scratchpad`) or:
+
+```bash
+journalctl --user -f | grep gnome-scratchpad
+```
+
+- **A shortcut does nothing** — the keybind may be reserved by GNOME (see
+  *Picking shortcuts*), or the `wmclass`/`title` doesn't match any open window.
+  The log lists the windows it found, which helps refine your matcher.
+- **Nothing works at all** — make sure the schema was compiled (`./bin/build`)
+  and the extension is enabled in the Extensions app.
+
+## Development
+
+```bash
+./bin/build   # compile the GSettings schema (required before first load)
+./bin/test    # headless tests (config parsing/migration + D-Bus interface)
+./bin/run     # launch a nested GNOME Shell to try changes in isolation
+```
