@@ -23,7 +23,7 @@ get back to what you were doing. This extension brings that to GNOME.
 - **Match by class or title** — target windows by their `wmclass` or window
   title, using regular expressions.
 - **Live reload** — changes apply immediately; no need to toggle the extension.
-- **GNOME 45–49** support.
+- **GNOME 45–50** support.
 
 ## How it works
 
@@ -66,6 +66,50 @@ gnome-extensions enable scratchpad@wastedintelligence.com
 ```
 
 (or toggle it on in the **Extensions** app.)
+
+### NixOS (flake)
+
+This repo is a flake, so NixOS users can install it declaratively. Add it as an
+input:
+
+```nix
+# flake.nix
+{
+  inputs.gscratch.url = "github:olafkfreund/gscratch";
+}
+```
+
+**With Home Manager** (recommended — it also handles enabling the extension):
+
+```nix
+{ inputs, pkgs, ... }:
+{
+  programs.gnome-shell = {
+    enable = true;
+    extensions = [
+      { package = inputs.gscratch.packages.${pkgs.system}.default; }
+    ];
+  };
+}
+```
+
+**With NixOS** (system-wide install; enable it afterwards in the Extensions app
+or via dconf):
+
+```nix
+{ inputs, pkgs, ... }:
+{
+  environment.systemPackages = [
+    inputs.gscratch.packages.${pkgs.system}.default
+  ];
+}
+```
+
+The package compiles the GSettings schema for you and installs into
+`share/gnome-shell/extensions/`, so GNOME discovers it automatically — no
+`./bin/build` step needed. An overlay (`overlays.default`, exposing
+`gnome-shell-extension-scratchpad`) and a dev shell (`nix develop`) are also
+provided.
 
 ## Getting started
 
