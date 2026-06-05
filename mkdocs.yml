@@ -1,0 +1,11 @@
+# MkDocs config for Backstage TechDocs.
+# Edit at will — Backstage rebuilds on next view.
+# https://backstage.io/docs/features/techdocs/getting-started
+
+site_name: gscratch
+site_description: Sway/i3-like scratchpad functionality for Gnome.
+
+docs_dir: docs
+
+plugins:
+  - techdocs-core
