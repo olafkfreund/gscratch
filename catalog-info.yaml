@@ -7,6 +7,7 @@ metadata:
   name: gscratch
   description: "Sway/i3-like scratchpad functionality for Gnome."
   annotations:
+    backstage.io/techdocs-ref: dir:.
     github.com/project-slug: olafkfreund/gscratch
   tags: []
 spec:
